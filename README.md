@@ -8,3 +8,7 @@ A relatively basic console application demonstrating many of the concepts needed
 * Displaying scopes and their bindings (variables and properties)
 * Displaying call stack
 * Evaluating expressions
+
+Usage
+-----
+Simply call the executable with a path to a script file. Type help for a list of commands. The listing shows full command name, short command name (if any), arguments (if any - angular brackets = required, square brackets = optional), and a description of the commmand.
