@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "JintDebuggerExample": {
+      "commandName": "Project",
+      "commandLineArgs": "Data\\silly-example-script.js"
+    }
+  }
+}
