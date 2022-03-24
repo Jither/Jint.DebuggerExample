@@ -11,4 +11,4 @@ A relatively basic console application demonstrating many of the concepts needed
 
 Usage
 -----
-Simply call the executable with a path to a script file. Type help for a list of commands. The listing shows full command name, short command name (if any), arguments (if any - angular brackets = required, square brackets = optional), and a description of the commmand.
+Simply call the executable with a path to a script file. The script will be paused before execution of the first line. Type `help` for a list of debugger commands. The listing shows full command name, short command name (if any), arguments (if any - angular brackets = required, square brackets = optional), and a description of the commmand.
