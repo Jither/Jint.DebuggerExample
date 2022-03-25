@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using Esprima;
+using Jint.DebuggerExample;
 using Jint.Native;
-using Jint.Native.Object;
 using JintDebuggerExample.Helpers;
 
 namespace JintDebuggerExample;
@@ -14,11 +12,6 @@ namespace JintDebuggerExample;
 /// </summary>
 internal class CommandLine
 {
-    private static readonly JsonSerializerOptions stringToJsonOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
     /// <summary>
     /// Callback and metadata (for "help" generation) for a single debugger command
     /// </summary>
@@ -47,6 +40,7 @@ internal class CommandLine
 
     private readonly Dictionary<string, CommandHandler> commandHandlersByCommand = new();
     private readonly List<CommandHandler> commandHandlers = new();
+    private readonly ValueRenderer renderer = new();
 
     /// <summary>
     /// The input loop. Keeps asking for a command until a valid command is entered, and it's handler returns
@@ -128,7 +122,7 @@ internal class CommandLine
     /// </summary>
     public void OutputBinding(string name, JsValue value)
     {
-        Output(RenderBinding(name, value));
+        Output(renderer.RenderBinding(name, value));
     }
 
     /// <summary>
@@ -136,56 +130,8 @@ internal class CommandLine
     /// </summary>
     public void OutputValue(JsValue value)
     {
-        string valueString = RenderValue(value, renderProperties: true);
+        string valueString = renderer.RenderValue(value, renderProperties: true);
         Output(valueString);
-    }
-
-    // The following Render* methods are a somewhat minimal approach to yielding useful output about variables,
-    // properties and objects. Jint.DebugAdapter has a much more complete example of handling various types of values.
-
-    private string RenderBinding(string name, JsValue value)
-    {
-        string valueString = RenderValue(value);
-        return RenderBinding(name, valueString);
-    }
-
-    // Although strings are implicitly converted to JsString, we don't want literal strings (e.g. "(...)")
-    // JSON encoded, like JsString is - hence this overload of RenderBinding
-    private string RenderBinding(string name, string value)
-    {
-        string croppedName = name.CropEnd(20);
-        string croppedValue = value.CropEnd(55);
-        return $"{croppedName,-20} : {croppedValue,-55}";
-    }
-
-    private string RenderObject(ObjectInstance obj)
-    {
-        var result = new List<string>();
-        foreach (var prop in obj.GetOwnProperties())
-        {
-            string name = prop.Key.ToString();
-            if (prop.Value.Get != null)
-            {
-                result.Add(RenderBinding(name, "(...)"));
-            }
-            else
-            {
-                result.Add(RenderBinding(name, prop.Value.Value));
-            }
-        }
-
-        return String.Join(Environment.NewLine, result);
-    }
-
-    private string RenderValue(JsValue value, bool renderProperties = false)
-    {
-        return value switch
-        {
-            null => "null",
-            JsString => JsonSerializer.Serialize(value.ToString(), stringToJsonOptions),
-            ObjectInstance obj => renderProperties ? RenderObject(obj) : obj.ToString(),
-            _ => value.ToString()
-        };
     }
 
     private bool HandleCommand(string commandLine)

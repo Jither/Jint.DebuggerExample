@@ -187,7 +187,9 @@ internal class Debugger
 
         var scope = currentInfo.CurrentScopeChain[index];
 
-        // For local scope, we include return value (if at a return point - i.e. if ReturnValue isn't null)
+        commandLine.Output($"{scope.ScopeType} scope:");
+
+        // For local scope, we output return value (if at a return point - i.e. if ReturnValue isn't null)
         // and "this" (if defined)
         if (scope.ScopeType == DebugScopeType.Local)
         {
@@ -201,6 +203,7 @@ internal class Debugger
             }
         }
 
+        // And now all the scope's bindings ("variables")
         foreach (var name in scope.BindingNames)
         {
             JsValue value = scope.GetBindingValue(name);
@@ -218,6 +221,7 @@ internal class Debugger
         }
         try
         {
+            // DebugHandler.Evaluate allows us to evaluate the expression in the Engine's current execution context.
             var result = engine.DebugHandler.Evaluate(args);
             commandLine.OutputValue(result);
         }

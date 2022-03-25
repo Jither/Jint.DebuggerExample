@@ -5,7 +5,7 @@ using Esprima;
 namespace JintDebuggerExample;
 
 /// <summary>
-/// Holds "metadata" information about a loaded script: It's source code, and valid breakpoint positions.
+/// Holds "metadata" information about a loaded script: Its source code, and valid breakpoint positions.
 /// </summary>
 internal class SourceInfo
 {

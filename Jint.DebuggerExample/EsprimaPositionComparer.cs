@@ -4,7 +4,7 @@ using Esprima;
 namespace JintDebuggerExample;
 
 /// <summary>
-/// Does comparison of Esprima positions (line/column) for binary search - until Esprima.Position might get an
+/// Does comparison of Esprima positions (line/column) for binary search - until Esprima.Position might implement the
 /// IComparable interface.
 /// </summary>
 internal class EsprimaPositionComparer : IComparer<Position>
