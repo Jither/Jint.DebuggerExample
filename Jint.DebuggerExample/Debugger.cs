@@ -307,7 +307,7 @@ internal class Debugger
 
     private string RenderLocation(Location location)
     {
-        string? source = location.Source?.CropEnd(20);
+        string? source = location.Source?.CropStart(20);
         int line = location.Start.Line;
         int column = location.Start.Column;
         return RenderLocation(source, line, column);
