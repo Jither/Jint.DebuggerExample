@@ -4,7 +4,7 @@ namespace JintDebuggerExample;
 
 /// <summary>
 /// Simple example of extending breakpoints. This one uses gdb's idea of a temporary breakpoint for single use - i.e.
-/// removed when hit.
+/// it's removed when hit.
 /// </summary>
 internal class ExtendedBreakPoint : BreakPoint
 {

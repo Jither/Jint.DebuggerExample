@@ -187,8 +187,8 @@ internal class Debugger
 
         var scope = currentInfo.CurrentScopeChain[index];
 
-        // For local scope, we include return value (if at a return point - i.e. if it's not == null)
-        // and this (if defined)
+        // For local scope, we include return value (if at a return point - i.e. if ReturnValue isn't null)
+        // and "this" (if defined)
         if (scope.ScopeType == DebugScopeType.Local)
         {
             if (currentInfo.ReturnValue != null)
@@ -226,7 +226,7 @@ internal class Debugger
             // InnerException is the original JavaScriptException or ParserException.
             // We want the message from those, if it's available.
             // In rare cases, other exceptions may be thrown by Jint - in those cases,
-            // we display the 
+            // we display the DebugEvaluationException's own message.
             throw new CommandException(ex.InnerException?.Message ?? ex.Message);
         }
 

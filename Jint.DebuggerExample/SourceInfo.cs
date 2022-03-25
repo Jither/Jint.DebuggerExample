@@ -28,7 +28,11 @@ internal class SourceInfo
     {
         // Note that in Esprima, and hence Jint, the first line is line 1. The first column is column 0.
         int lineStart = linePositions[position.Line - 1];
-        int lineEnd = linePositions[position.Line] - 1; // Don't include newline
+
+        // Don't include newline
+        int lineEnd = linePositions[position.Line] - 1;
+
+        // ... or carriage return, if it's there
         if (lineBreaks.Contains(Source[lineEnd]))
         {
             lineEnd--;
@@ -43,9 +47,11 @@ internal class SourceInfo
         int index = positions.BinarySearch(position, EsprimaPositionComparer.Default);
         if (index < 0)
         {
-            // Get the first break after the location
+            // Get the first break after the candidate position
             index = ~index;
         }
+
+        // If we're past the last position, just use the last position
         if (index >= positions.Count)
         {
             index = positions.Count - 1;
@@ -69,6 +75,7 @@ internal class SourceInfo
             linePosition++;
             if (Source[linePosition - 1] == '\r')
             {
+                // Carriage return may be followed by newline, which also needs skipping
                 if (linePosition < Source.Length && Source[linePosition] == '\n')
                 {
                     linePosition++;
@@ -84,12 +91,14 @@ internal class SourceInfo
         // For now, we do our own Esprima parse:
         var parser = new JavaScriptParser(source, new ParserOptions(Id));
         var ast = parser.ParseScript();
+
         var collector = new BreakPointCollector();
         collector.Visit(ast);
 
         // We need positions distinct and sorted (they'll be used in binary search)
         var positions = collector.Positions.Distinct().ToList();
         positions.Sort(EsprimaPositionComparer.Default);
+
         return positions;
     }
 }

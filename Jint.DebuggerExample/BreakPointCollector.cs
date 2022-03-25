@@ -6,8 +6,8 @@ using Esprima.Utils;
 namespace JintDebuggerExample;
 
 /// <summary>
-/// Collects valid breakpoint locations. Eventually, this should probably be part of Jint itself, since it makes
-/// the decision about what locations are valid.
+/// Collects valid breakpoint locations. Eventually, this should probably be part of Jint itself, since it's really
+/// Jint that makes the decision about what locations are valid.
 /// </summary>
 public class BreakPointCollector : AstVisitor
 {

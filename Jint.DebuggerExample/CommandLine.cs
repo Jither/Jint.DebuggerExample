@@ -19,6 +19,9 @@ internal class CommandLine
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
+    /// <summary>
+    /// Callback and metadata (for "help" generation) for a single debugger command
+    /// </summary>
     private class CommandHandler
     {
         public Func<string, bool> Callback { get; }
@@ -215,7 +218,7 @@ internal class CommandLine
         }
     }
 
-    // Simple argument parser methods for the debugger commands.
+    // Parse* - Simple argument parser methods for the debugger commands.
 
     public Position ParseBreakPoint(string args)
     {
