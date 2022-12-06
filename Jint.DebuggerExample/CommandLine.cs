@@ -120,7 +120,7 @@ internal class CommandLine
     /// <summary>
     /// Outputs a single binding or object property (name + value)
     /// </summary>
-    public void OutputBinding(string name, JsValue value)
+    public void OutputBinding(string name, JsValue? value)
     {
         Output(renderer.RenderBinding(name, value));
     }
@@ -187,7 +187,7 @@ internal class CommandLine
             }
         }
 
-        return new Position(line, column);
+        return Position.From(line, column);
     }
 
     public int ParseIndex(string args, int count)

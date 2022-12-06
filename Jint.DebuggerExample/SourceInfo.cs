@@ -85,12 +85,10 @@ internal class SourceInfo
         linePositions.Add(Source.Length);
     }
 
-    private List<Position> CollectBreakPointPositions(string source)
+    private List<Position> CollectBreakPointPositions(string code)
     {
-        // A Jint API (event) for getting the AST from Jint is forthcoming.
-        // For now, we do our own Esprima parse:
-        var parser = new JavaScriptParser(source, new ParserOptions(Id));
-        var ast = parser.ParseScript();
+        var parser = new JavaScriptParser();
+        var ast = parser.ParseScript(code, source: Id);
 
         var collector = new BreakPointCollector();
         collector.Visit(ast);

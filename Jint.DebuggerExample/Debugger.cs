@@ -55,9 +55,9 @@ internal class Debugger
     public void Execute(string path)
     {
         string script = sources.Load(path, path);
-        // We include the path in the parser options - easy way of identifying what script we're in
+        // We supply the path to Jint as the source - easy way of identifying what script we're in
         // for multi file scripts (although we don't support multiple scripts in this example).
-        engine.Execute(script, new ParserOptions(path));
+        engine.Execute(script, source: path);
         commandLine.Output("Execution reached end of script.");
     }
 
@@ -206,7 +206,7 @@ internal class Debugger
         // And now all the scope's bindings ("variables")
         foreach (var name in scope.BindingNames)
         {
-            JsValue value = scope.GetBindingValue(name);
+            JsValue? value = scope.GetBindingValue(name);
             commandLine.OutputBinding(name, value);
         }
 

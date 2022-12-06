@@ -20,7 +20,7 @@ internal class ValueRenderer
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public string RenderBinding(string name, JsValue value)
+    public string RenderBinding(string name, JsValue? value)
     {
         string valueString = RenderValue(value);
         return RenderBinding(name, valueString);
@@ -35,7 +35,7 @@ internal class ValueRenderer
         return $"{croppedName,-20} : {croppedValue,-55}";
     }
 
-    public string RenderValue(JsValue value, bool renderProperties = false)
+    public string RenderValue(JsValue? value, bool renderProperties = false)
     {
         return value switch
         {
