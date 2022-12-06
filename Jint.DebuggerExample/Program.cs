@@ -10,11 +10,13 @@ internal class Program
 {
     private class Options
     {
-        public string FileName { get; }
+        public bool IsModule { get; }
+        public string Path { get; }
 
-        public Options(string fileName)
+        public Options(string path, bool isModule)
         {
-            FileName = fileName;
+            Path = path;
+            IsModule = isModule;
         }
     }
 
@@ -28,8 +30,14 @@ internal class Program
         {
             var options = ParseArguments(args);
 
-            var debugger = new Debugger();
-            debugger.Execute(options.FileName);
+            var basePath = Path.GetDirectoryName(options.Path);
+            if (basePath == null)
+            {
+                throw new ProgramException("Couldn't determine base path for script.");
+            }
+
+            var debugger = new Debugger(basePath, options.IsModule);
+            debugger.Execute(options.Path);
         }
         catch (ProgramException ex)
         {
@@ -39,12 +47,33 @@ internal class Program
 
     private static Options ParseArguments(string[] args)
     {
-        if (args.Length == 0)
+        string? path = null;
+        bool isModule = false;
+        foreach (var arg in args)
         {
-            throw new ProgramException("No script specified.");
+            if (arg.StartsWith('-'))
+            {
+                switch (arg[1..])
+                {
+                    case "m":
+                        isModule = true;
+                        break;
+                    default:
+                        throw new ProgramException($"Unknown option: {arg}");
+                }
+            }
+            else
+            {
+                path = Path.GetFullPath(arg);
+            }
         }
 
-        return new Options(args[0]);
+        if (path == null)
+        {
+            throw new ProgramException("No script/module path specified.");
+        }
+
+        return new Options(path, isModule);
     }
 
     private static void OutputError(Exception ex)
@@ -55,7 +84,9 @@ internal class Program
 
     private static void OutputHelp()
     {
-        string exeName = Path.GetFileName(Assembly.GetExecutingAssembly().FullName) ?? "JintDebuggerExample";
-        Console.WriteLine($"Usage: {exeName} <path to script>");
+        string exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location) ?? "JintDebuggerExample";
+        Console.WriteLine($"Usage: {exeName} <path to script> [options]");
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -m   Load script as module.");
     }
 }

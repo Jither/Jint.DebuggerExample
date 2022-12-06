@@ -1,8 +1,16 @@
 {
   "profiles": {
-    "JintDebuggerExample": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Debug single script": {
       "commandName": "Project",
       "commandLineArgs": "Data\\silly-example-script.js"
+    },
+    "Debug module": {
+      "commandName": "Project",
+      "commandLineArgs": "Data\\main.js -m"
     }
   }
 }

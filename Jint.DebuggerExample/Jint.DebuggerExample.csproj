@@ -12,7 +12,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\example-module.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\silly-example-script.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\main.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

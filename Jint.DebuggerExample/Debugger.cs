@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using Esprima;
 using Jint;
+using Jint.DebuggerExample.Modules;
 using Jint.Native;
 using Jint.Runtime.Debugger;
 using JintDebuggerExample.Helpers;
@@ -17,12 +19,16 @@ internal class Debugger
     private readonly Engine engine;
     private readonly CommandLine commandLine;
     private readonly SourceManager sources;
+    private string basePath;
+    private bool isModule;
 
     private StepMode stepMode = StepMode.Into;
     private DebugInformation? currentInfo;
 
-    public Debugger()
+    public Debugger(string basePath, bool isModule)
     {
+        this.basePath = basePath;
+        this.isModule = isModule;
         commandLine = new CommandLine();
         sources = new SourceManager();
 
@@ -42,22 +48,44 @@ internal class Debugger
         commandLine.Register("Help", Help, "help", "h");
         commandLine.Register("Exit debugger", Exit, "exit", "x");
 
-        engine = new Engine(options => options
-            .DebugMode()
-            .DebuggerStatementHandling(DebuggerStatementHandling.Script)
-            .InitialStepMode(stepMode)
-        );
+        engine = new Engine(options =>
+        {
+            options
+                .DebugMode()
+                .DebuggerStatementHandling(DebuggerStatementHandling.Script)
+                .InitialStepMode(stepMode);
+
+            if (isModule)
+            {
+                // We need to keep track of scripts loaded in SourceManager - for breakpoints etc.
+                // Hence, when using modules, we need to be notified by the Jint ModuleLoader.
+                // Jint doesn't have this support, so we're using a customized module loader here.
+                var moduleLoader = new DefaultTalkativeModuleLoader(basePath);
+                moduleLoader.Loaded += ModuleLoader_Loaded;
+                options.EnableModules(moduleLoader);
+            }
+        });
 
         engine.DebugHandler.Break += DebugHandler_Break;
         engine.DebugHandler.Step += DebugHandler_Step;
     }
 
-    public void Execute(string path)
+    private void ModuleLoader_Loaded(string source, Esprima.Ast.Module module)
     {
-        string script = sources.Load(path, path);
-        // We supply the path to Jint as the source - easy way of identifying what script we're in
-        // for multi file scripts (although we don't support multiple scripts in this example).
-        engine.Execute(script, source: path);
+        sources.Load(source, source);
+    }
+
+    public void Execute(string scriptPath)
+    {
+        if (isModule)
+        {
+            engine.ImportModule(scriptPath);
+        }
+        else
+        {
+            string script = sources.Load(scriptPath, scriptPath);
+            engine.Execute(script, source: scriptPath);
+        }
         commandLine.Output("Execution reached end of script.");
     }
 
