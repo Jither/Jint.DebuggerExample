@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using Esprima;
 using Jint;
-using Jint.DebuggerExample.Modules;
 using Jint.Native;
 using Jint.Runtime.Debugger;
+using Jint.Runtime.Modules;
 using JintDebuggerExample.Helpers;
 
 namespace JintDebuggerExample;
@@ -19,15 +18,13 @@ internal class Debugger
     private readonly Engine engine;
     private readonly CommandLine commandLine;
     private readonly SourceManager sources;
-    private string basePath;
-    private bool isModule;
+    private readonly bool isModule;
 
     private StepMode stepMode = StepMode.Into;
     private DebugInformation? currentInfo;
 
     public Debugger(string basePath, bool isModule)
     {
-        this.basePath = basePath;
         this.isModule = isModule;
         commandLine = new CommandLine();
         sources = new SourceManager();
@@ -60,7 +57,7 @@ internal class Debugger
                 // We need to keep track of scripts loaded in SourceManager - for breakpoints etc.
                 // Hence, when using modules, we need to be notified by the Jint ModuleLoader.
                 // Jint doesn't have this support, so we're using a customized module loader here.
-                var moduleLoader = new DefaultTalkativeModuleLoader(basePath);
+                var moduleLoader = new DefaultModuleLoader(basePath);
                 moduleLoader.Loaded += ModuleLoader_Loaded;
                 options.EnableModules(moduleLoader);
             }
@@ -70,7 +67,7 @@ internal class Debugger
         engine.DebugHandler.Step += DebugHandler_Step;
     }
 
-    private void ModuleLoader_Loaded(string source, Esprima.Ast.Module module)
+    private void ModuleLoader_Loaded(object sender, string source, Esprima.Ast.Module module)
     {
         sources.Load(source, source);
     }
