@@ -16,7 +16,7 @@ Simply call the executable with a path to a script file. The script will be paus
 
 Modules
 -------
-The example debugger supports modules in the base path of the provided script (using, for now, a slightly modified version of Jint's `DefaultModuleLoader`), when called with `-m` option. I.e., calling:
+The example debugger supports modules in the base path of the provided script, when called with `-m` option. I.e., calling:
 
     Jint.DebuggerExample D:\app\main.js -m
 
