@@ -133,7 +133,7 @@ internal class Debugger
     private bool DeleteBreakPoint(string args)
     {
         var breakPoints = engine.DebugHandler.BreakPoints;
-        int index = commandLine.ParseIndex(args, engine.DebugHandler.BreakPoints.Count);
+        int index = commandLine.ParseIndex(args, engine.DebugHandler.BreakPoints.Count, "breaks");
 
         // Yeah, this is where I realize that BreakPointCollection should probably be ICollection
         var breakPoint = breakPoints.Skip(index).First();
@@ -208,7 +208,7 @@ internal class Debugger
     {
         Debug.Assert(currentInfo != null);
 
-        int index = commandLine.ParseIndex(args, currentInfo.CurrentScopeChain.Count);
+        int index = commandLine.ParseIndex(args, currentInfo.CurrentScopeChain.Count, "scopes");
 
         var scope = currentInfo.CurrentScopeChain[index];
 
@@ -297,6 +297,14 @@ internal class Debugger
 
     private StepMode DebugHandler_Step(object sender, DebugInformation e)
     {
+        // TODO: Workaround: Currently, Jint will sometimes trigger Step when it shouldn't, and where it doesn't have a source.
+        // Currently, this is known to occur when new'ing a class that doesn't have a constructor declared. This will
+        // trigger a return point step for the non-existant constructor.
+        if (e.Location.Source == null)
+        {
+            commandLine.Output("Warning: Skipped step without source.");
+            return stepMode;
+        }
         Pause(e);
         return stepMode;
     }

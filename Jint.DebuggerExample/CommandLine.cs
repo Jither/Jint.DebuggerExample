@@ -190,11 +190,11 @@ internal class CommandLine
         return Position.From(line, column);
     }
 
-    public int ParseIndex(string args, int count)
+    public int ParseIndex(string args, int count, string listCommand)
     {
         if (args == String.Empty)
         {
-            throw new CommandException("You need to specify an index");
+            throw new CommandException($"You need to specify an index. Use '{listCommand}' to list items with indices.");
         }
         if (!Int32.TryParse(args, out int index))
         {
