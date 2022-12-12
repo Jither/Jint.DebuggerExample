@@ -297,9 +297,8 @@ internal class Debugger
 
     private StepMode DebugHandler_Step(object sender, DebugInformation e)
     {
-        // TODO: Workaround: Currently, Jint will sometimes trigger Step when it shouldn't, and where it doesn't have a source.
-        // Currently, this is known to occur when new'ing a class that doesn't have a constructor declared. This will
-        // trigger a return point step for the non-existant constructor.
+        // TODO: Workaround: Currently, Jint may sometimes trigger Step when it shouldn't, and where it doesn't have a source.
+        // Of course, this will also happen if we let the engine interpret scripts without giving it a source.
         if (e.Location.Source == null)
         {
             commandLine.Output("Warning: Skipped step without source.");
