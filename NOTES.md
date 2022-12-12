@@ -116,9 +116,9 @@ Scopes are organized similarly to Chromium:
 * The __Global__ scope only includes the properties of the global object, variables declared with `var`, and functions (in other words, the global *object environment record*).
 * The __Script__ scope includes the top level variables declared with `let`/`const` as well as top level declared classes (in other words, the global *declarative environment record*).
 * Scopes with no bindings are not included in the chain. __How it should be:__ Should they be?
-* There can only be a single __Local__ scope - in the innermost function. Any outer "local" scopes have the type `Closure`.
+* There can only be a single __Local__ scope - in the innermost function. Any outer "local" scopes have the type __Closure__.
 * `catch` gets its own __Catch__ scope, which only ever includes the argument to `catch`.
-* Modules also get their own `Module` scope, which corresponds to the *module environment record*.
+* Modules also get their own __Module__ scope, which corresponds to the *module environment record*.
 
 __How it is now:__ Bindings that are shadowed by inner scopes are removed from the scope's list of bindings.
 
@@ -147,4 +147,10 @@ In many cases, debuggers will need access to the AST of the scripts. Jint obviou
 
 __How it is now:__ Recently added a `Loaded` event to the `DefaultModuleLoader`. If implementing your own `IModuleLoader`, it's obviously trivial to add events or direct calls to hand the AST to the debugger. That covers the case of modules.
 
-__How it should be:__ Ideally, whenever Jint does the parsing of the script, it should trigger an event to hand the AST (and possibly other info) to the debugger. In the case of interactive debuggers such an event would also be a good time for the debugger to prepare for debugging and notify any external parties (e.g. Chromium dev-tools) that the script is ready for execution - regardless of whether the debugger could retrieve the AST elsewhere (e.g. by parsing the script itself).
+__How it should be:__ For the case of scripts (as opposed to modules), ideally, whenever Jint does the parsing of the script, it should trigger an event to hand the AST (and possibly other info) to the debugger. In the case of interactive debuggers such an event would also be a good time for the debugger to prepare for debugging and notify any external parties (e.g. Chromium dev-tools) that the script is ready for execution - regardless of whether the debugger could retrieve the AST elsewhere (e.g. by parsing the script itself).
+
+### Exceptions
+
+__How it is now:__ `DebugHandler` does not deal with exceptions at all.
+
+__How it should be:__ `DebugHandler` should be called (when in DebugMode) whenever an exception is (about to be) thrown - in order to debug at the site, by e.g. `DebugHandler` triggering an `Error` event. This requires (still) centralization of Jint's script exception handling. 🙂
