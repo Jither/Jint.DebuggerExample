@@ -54,22 +54,31 @@ internal class Debugger
 
             if (isModule)
             {
-                // We need to keep track of scripts loaded in SourceManager - for breakpoints etc.
-                // Hence, when using modules, we need to be notified by the Jint ModuleLoader.
-                // Jint doesn't have this support, so we're using a customized module loader here.
-                var moduleLoader = new DefaultModuleLoader(basePath);
-                moduleLoader.Loaded += ModuleLoader_Loaded;
-                options.EnableModules(moduleLoader);
+                options.EnableModules(basePath);
             }
         });
+
+        if (isModule)
+        {
+            // We need to keep track of scripts loaded in SourceManager - for breakpoints etc.
+            // Since modules may load other modules, we're adding them to SourceManager through
+            // the BeforeEvaluate event.
+            engine.DebugHandler.BeforeEvaluate += DebugHandler_BeforeEvaluate;
+        }
 
         engine.DebugHandler.Break += DebugHandler_Break;
         engine.DebugHandler.Step += DebugHandler_Step;
     }
 
-    private void ModuleLoader_Loaded(object sender, string source, Esprima.Ast.Module module)
+    private void DebugHandler_BeforeEvaluate(object sender, Esprima.Ast.Program ast)
     {
-        sources.Load(source, source);
+        // We're using the DefaultModuleLoader, which uses the path as the "source" of the AST locations - this
+        // allows us to load the actual script.
+        string? source = ast.Location.Source;
+        if (source != null)
+        {
+            sources.Load(source, source);
+        }
     }
 
     public void Execute(string scriptPath)

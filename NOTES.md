@@ -22,9 +22,7 @@ There are a few DebugHandler-related options that can be specified via the Jint 
 * `StepMode.Over` - means "step over function calls and getter/setter invocations".
 * `StepMode.Out` - means "step out of the current function/getter/setter".
 
-__How it is now:__ `Into`/`Over`/`Out` will trigger the `Step` event at the next appropriate execution point. `None` will only trigger `Break` if it hits a breakpoint or debugger statement - no other events will be triggered with `StepMode.None`.
-
-__How it should be:__ *Some* event will trigger for *every* step of the script, regardless of `StepMode` - what it changes is the *kind* of event that will trigger.
+An event will trigger for *every* step of the script, regardless of `StepMode` - what changes is the *kind* of event that will trigger. More on that below.
 
 __Note__ that "steps" does not mean "statements". See below.
 
@@ -45,31 +43,31 @@ Breakpoints aren't line based: Multiple execution points, and hence breakpoint l
 __How it should be:__ Jint should provide a method to find valid break locations - and locate the valid break location nearest to a location given by the user. Jint.ExampleDebugger has an example implementation of such a method, but since Jint decides what constitutes a valid break location, it should probably also be Jint's job to make those locations easy to determine for the user.
 
 ## Events
-The bulk of interfacing with `DebugHandler` happens through its events. For each execution point, `DebugHandler` triggers an event.
+The bulk of interfacing with `DebugHandler` happens through its events.
 
-__How it is now:__ ... except when `StepMode = None`. There are currently two events: `Step` is triggered at each eligible step when stepping. `Break` is triggered when `StepMode = None` (or while e.g. stepping over or out), and the interpreter reaches a breakpoint or `debugger` statement. Other steps that are reached while `StepMode = None` will *not* trigger an event.
+For each execution point, `DebugHandler` triggers one (and only one) of the events `Step`, `Break` or `Skip`. `Break` is used for both breakpoints and `debugger` statements - the exact reason for the event triggering can be determined through the `PauseType` that's set when the event is triggered. 
 
-__How it should be:__ Three events - but they could - and should probably - be collapsed into being a single `Step` event, with a `Reason` parameter. 
-
-Let's define two states for the execution: "stepping" and "running":
+To see how the type of event is determined, let's define two states for the execution: "stepping" and "running":
 
 * "stepping": when `StepMode = Into/Over/Out` and the next step is reached.
 * "running" when `StepMode = None` *or* when `StepMode = Over/Out` and the next step hasn't been reached yet.
 
-Then the reason given by the `Step` event would be:
+Then the type of event is determined thus:
 
 * `Step` - when stepping.
 * `BreakPoint` - when reaching an active breakpoint while running.
 * `DebuggerStatement` - when reaching a debugger statement while running.
 * `Skip` - all other cases - i.e. while running, but we're not at a breakpoint or debugger statement.
 
-Note that `BreakPoint` and `DebuggerStatement` are only triggered while running. Stepping to an execution point that has a breakpoint or debugger statement will only trigger `Step` (because the reason for the event isn't the breakpoint, but simply that we stepped to the execution point).
+Note that `BreakPoint` and `DebuggerStatement` are only triggered while running. *Stepping* to an execution point that has a breakpoint or debugger statement will only trigger `Step`, because the reason for the event isn't the breakpoint, but simply that we stepped to the execution point.
+
+Some things to note:
 
 The only difference between these events is the reason - which may be used by the debugger implementation to make decisions on UI etc. All of the events have access to the same data from the `DebugHandler` - current node, the current breakpoint (even if it wasn't the reason for the event triggering), the call stack, etc.
 
 `Step` still has access to the breakpoint, even when it wasn't the breakpoint that triggered the event. This is useful for e.g. log points (which, depending on implementation, would still need to log even when stepping through the log point location), or breakpoints with hit count (which, again, would still need to increment the hit counter even when stepping through the breakpoint location).
 
-There are a few use cases for the `Skip` event, e.g. responding to the user clicking `Pause` or `Stop` in a debugger while the script is running. When running, only `BreakPoint`/`DebuggerStatement` and `Skip` events will be called. In most other cases, `Skip` events should result in no action from the debugger.
+There are a few use cases for the `Skip` event, e.g. responding to the user clicking `Pause` or `Stop` in a debugger while the script is running. Remember that when running, only `BreakPoint`/`DebuggerStatement` and `Skip` events will be called - so the only way to respond to user interaction when there's no `debugger` statement or breakpoint is through the `Skip` event. In most other cases, `Skip` events should result in no action from the debugger.
 
 ## Information and methods available in event handlers
 
@@ -106,10 +104,6 @@ Each `CallFrame` includes:
 
 A scope chain, `DebugScopes`, contains all the scopes of a call frame. Note that each call frame may have a very different scope chain from another - all of them are accessible through `CallStack[n].ScopeChain`, allowing a debugger implementation to make the call stack "browsable", updating the scope chain depending on where in the call stack the user is inspecting.
 
-__How it is now:__ The `DebugScopes`, in addition to the read only list of scopes, also includes two read only properties: `Global` and `Local` for accessing those two scopes in particular.
-
-__How it should be:__ `DebugScopes` shouldn't include any properties for specific scopes. `Global` and `Local`, by now, are rather arbitrary choices of scopes - and some scope types may appear multiple times in the list. Simpler to just use the list directly.
-
 Scopes are organized similarly to Chromium:
 
 * It uses the same scope types - see the source and comments for the `DebugScopeTypes` enum. Only `Eval` and `WasmExpressionStack` are not currently used.
@@ -120,9 +114,7 @@ Scopes are organized similarly to Chromium:
 * `catch` gets its own __Catch__ scope, which only ever includes the argument to `catch`.
 * Modules also get their own __Module__ scope, which corresponds to the *module environment record*.
 
-__How it is now:__ Bindings that are shadowed by inner scopes are removed from the scope's list of bindings.
-
-__How it should be:__ Bindings are left as-is. Debuggers allow inspection of shadowed variables in outer scopes. It also makes lazy evaluation of binding names simpler.
+Note that, like other debuggers, the scope chain allows inspection of shadowed variables in outer scopes.
 
 Each scope in the chain includes:
 
@@ -145,9 +137,7 @@ __How it should be:__ It would be preferable to only create a single object for 
 
 In many cases, debuggers will need access to the AST of the scripts. Jint obviously already parses the scripts and creates the ASTs.
 
-__How it is now:__ Recently added a `Loaded` event to the `DefaultModuleLoader`. If implementing your own `IModuleLoader`, it's obviously trivial to add events or direct calls to hand the AST to the debugger. That covers the case of modules.
-
-__How it should be:__ For the case of scripts (as opposed to modules), ideally, whenever Jint does the parsing of the script, it should trigger an event to hand the AST (and possibly other info) to the debugger. In the case of interactive debuggers such an event would also be a good time for the debugger to prepare for debugging and notify any external parties (e.g. Chromium dev-tools) that the script is ready for execution - regardless of whether the debugger could retrieve the AST elsewhere (e.g. by parsing the script itself).
+When Jint is about to execute a script or module - but after the code has been parsed - a `BeforeEvaluate` event will be triggered with an `ast` argument that holds the AST of the script or module. This both allows the debugger to reuse Jint's parsed AST - and, for interactive debuggers, allows the debugger UI to e.g. add breakpoints placed before launch, based on the AST.
 
 ### Exceptions
 
