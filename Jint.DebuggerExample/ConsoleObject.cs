@@ -7,8 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Jint.DebuggerExample;
 
@@ -115,9 +114,15 @@ internal class ConsoleObject
         Log(LogType.Log, values);
     }
 
+    private static readonly Regex rxLineBreaks = new(@"\r?\n");
+
     private void Log(LogType type, params JsValue[] values)
     {
         var valuesString = String.Join(' ', values.Select(v => renderer.RenderValue(v, renderProperties: true)));
+
+        // Result may include line breaks - log prefix should be added to each of them:
+        var lines = rxLineBreaks.Split(valuesString);
+
         uint color = type switch
         {
             LogType.Log => 0x40a4d8,
@@ -127,7 +132,10 @@ internal class ConsoleObject
             _ => 0xa0a0a0
         };
         string typeName = type.ToString().ToLowerInvariant().PadRight(5, ' ');
-        commandLine.Output($"[{ConsoleHelpers.Color(typeName, color)}] {valuesString}");
+        foreach (var line in lines)
+        {
+            commandLine.Output($"[{ConsoleHelpers.Color(typeName, color)}] {line}");
+        }
     }
 
     // TODO: Table()
