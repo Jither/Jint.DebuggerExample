@@ -41,7 +41,7 @@ internal class ValueRenderer
         {
             null => "null",
             JsString => JsonSerializer.Serialize(value.ToString(), stringToJsonOptions),
-            FunctionInstance func => RenderFunction(func),
+            Function func => RenderFunction(func),
             ObjectInstance obj => renderProperties ? RenderObject(obj) : obj.ToString(),
             _ => value.ToString()
         };
@@ -81,7 +81,7 @@ internal class ValueRenderer
         return String.Join(Environment.NewLine, result);
     }
 
-    private string RenderFunction(FunctionInstance func)
+    private string RenderFunction(Function func)
     {
         string result = func.ToString();
 

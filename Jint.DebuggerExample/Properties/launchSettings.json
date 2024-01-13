@@ -11,6 +11,10 @@
     "Debug module": {
       "commandName": "Project",
       "commandLineArgs": "Data\\main.js -m"
+    },
+    "Debug fields example": {
+      "commandName": "Project",
+      "commandLineArgs": "Data\\fields-example-script.js"
     }
   }
 }

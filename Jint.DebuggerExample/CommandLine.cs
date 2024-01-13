@@ -42,6 +42,11 @@ internal class CommandLine
     private readonly List<CommandHandler> commandHandlers = new();
     private readonly ValueRenderer renderer = new();
 
+    public void Clear()
+    {
+        Console.Clear();
+    }
+
     /// <summary>
     /// The input loop. Keeps asking for a command until a valid command is entered, and it's handler returns
     /// true (handlers that continue execution).

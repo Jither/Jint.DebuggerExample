@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using Esprima;
+using Esprima.Ast;
 
 namespace JintDebuggerExample;
 
@@ -16,12 +17,12 @@ internal class SourceInfo
     public string Id { get; }
     public string Source { get; }
 
-    public SourceInfo(string id, string source)
+    public SourceInfo(string id, string source, Esprima.Ast.Program ast)
     {
         Id = id;
         Source = source;
         LocateLines();
-        breakPointPositions = CollectBreakPointPositions(source);
+        breakPointPositions = CollectBreakPointPositions(ast);
     }
 
     public string GetLine(Position position)
@@ -85,11 +86,8 @@ internal class SourceInfo
         linePositions.Add(Source.Length);
     }
 
-    private List<Position> CollectBreakPointPositions(string code)
+    private List<Position> CollectBreakPointPositions(Esprima.Ast.Program ast)
     {
-        var parser = new JavaScriptParser();
-        var ast = parser.ParseScript(code, source: Id);
-
         var collector = new BreakPointCollector();
         collector.Visit(ast);
 

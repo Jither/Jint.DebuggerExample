@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using Esprima;
 using Jint;
+using Jint.DebuggerExample;
 using Jint.Native;
 using Jint.Runtime.Debugger;
 using Jint.Runtime.Modules;
@@ -58,16 +59,19 @@ internal class Debugger
             }
         });
 
-        if (isModule)
+        var console = new ConsoleObject(commandLine);
+        engine.SetValue("console", console);
+
+        //if (isModule)
         {
             // We need to keep track of scripts loaded in SourceManager - for breakpoints etc.
             // Since modules may load other modules, we're adding them to SourceManager through
             // the BeforeEvaluate event.
-            engine.DebugHandler.BeforeEvaluate += DebugHandler_BeforeEvaluate;
+            engine.Debugger.BeforeEvaluate += DebugHandler_BeforeEvaluate;
         }
 
-        engine.DebugHandler.Break += DebugHandler_Break;
-        engine.DebugHandler.Step += DebugHandler_Step;
+        engine.Debugger.Break += DebugHandler_Break;
+        engine.Debugger.Step += DebugHandler_Step;
     }
 
     private void DebugHandler_BeforeEvaluate(object sender, Esprima.Ast.Program ast)
@@ -77,7 +81,7 @@ internal class Debugger
         string? source = ast.Location.Source;
         if (source != null)
         {
-            sources.Load(source, source);
+            sources.Load(ast, source, source);
         }
     }
 
@@ -85,11 +89,12 @@ internal class Debugger
     {
         if (isModule)
         {
-            engine.ImportModule(scriptPath);
+            engine.Modules.Import(scriptPath);
         }
         else
         {
-            string script = sources.Load(scriptPath, scriptPath);
+            // string script = sources.Load(scriptPath, scriptPath);
+            string script = System.IO.File.ReadAllText(scriptPath);
             engine.Execute(script, source: scriptPath);
         }
         commandLine.Output("Execution reached end of script.");
@@ -141,8 +146,8 @@ internal class Debugger
 
     private bool DeleteBreakPoint(string args)
     {
-        var breakPoints = engine.DebugHandler.BreakPoints;
-        int index = commandLine.ParseIndex(args, engine.DebugHandler.BreakPoints.Count, "breaks");
+        var breakPoints = engine.Debugger.BreakPoints;
+        int index = commandLine.ParseIndex(args, engine.Debugger.BreakPoints.Count, "breaks");
 
         // Yeah, this is where I realize that BreakPointCollection should probably be ICollection
         var breakPoint = breakPoints.Skip(index).First();
@@ -154,7 +159,7 @@ internal class Debugger
 
     private bool ClearBreakPoints(string args)
     {
-        engine.DebugHandler.BreakPoints.Clear();
+        engine.Debugger.BreakPoints.Clear();
         commandLine.Output($"All breakpoints cleared.");
 
         return false;
@@ -162,14 +167,14 @@ internal class Debugger
 
     private bool InfoBreakPoints(string args)
     {
-        if (engine.DebugHandler.BreakPoints.Count == 0)
+        if (engine.Debugger.BreakPoints.Count == 0)
         {
             commandLine.Output("No breakpoints set.");
             return false;
         }
 
         int index = 0;
-        foreach (var breakPoint in engine.DebugHandler.BreakPoints)
+        foreach (var breakPoint in engine.Debugger.BreakPoints)
         {
             string flags = " ";
             if (breakPoint is ExtendedBreakPoint extended)
@@ -256,7 +261,7 @@ internal class Debugger
         try
         {
             // DebugHandler.Evaluate allows us to evaluate the expression in the Engine's current execution context.
-            var result = engine.DebugHandler.Evaluate(args);
+            var result = engine.Debugger.Evaluate(args);
             commandLine.OutputValue(result);
         }
         catch (DebugEvaluationException ex)
@@ -299,7 +304,7 @@ internal class Debugger
         // SourceManager/SourceInfo includes code for achieving that (may eventually be part of Jint API):
         position = sources.FindNearestBreakPointPosition(sourceId, position);
 
-        engine.DebugHandler.BreakPoints.Set(new ExtendedBreakPoint(sourceId, position.Line, position.Column, temporary: temporary));
+        engine.Debugger.BreakPoints.Set(new ExtendedBreakPoint(sourceId, position.Line, position.Column, temporary: temporary));
 
         return position;
     }
@@ -324,7 +329,7 @@ internal class Debugger
             // Temporary breakpoints are removed when hit
             if (breakPoint.Temporary)
             {
-                engine.DebugHandler.BreakPoints.RemoveAt(e.BreakPoint.Location);
+                engine.Debugger.BreakPoints.RemoveAt(e.BreakPoint.Location);
             }
         }
         Pause(e);

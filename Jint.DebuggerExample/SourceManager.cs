@@ -13,13 +13,13 @@ internal class SourceManager
 {
     private readonly Dictionary<string, SourceInfo> sourceInfoById = new();
 
-    public string Load(string sourceId, string path)
+    public string Load(Esprima.Ast.Program ast, string sourceId, string path)
     {
         string script;
         try
         {
             script = File.ReadAllText(path);
-            sourceInfoById.Add(sourceId, new SourceInfo(sourceId, script));
+            sourceInfoById.Add(sourceId, new SourceInfo(sourceId, script, ast));
             return script;
         }
         catch (IOException ex)
